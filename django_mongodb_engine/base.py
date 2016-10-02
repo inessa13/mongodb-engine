@@ -178,6 +178,9 @@ class DatabaseIntrospection(NonrelDatabaseIntrospection):
     def table_names(self, cursor=None):
         return self.connection.database.collection_names()
 
+    # compatibility with django 1.8+
+    get_table_list = table_names
+
     def sequence_list(self):
         # Only required for backends that use integer primary keys.
         pass

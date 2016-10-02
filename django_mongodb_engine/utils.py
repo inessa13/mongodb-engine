@@ -1,8 +1,12 @@
 import re
 import time
+import django
 
 from django.conf import settings
-from django.db.backends.util import logger
+if django.VERSION >= (1, 9):
+    from django.db.backends.utils import logger
+else:
+    from django.db.backends.util import logger
 
 from pymongo import ASCENDING
 from pymongo.cursor import Cursor

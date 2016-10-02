@@ -5,6 +5,7 @@ import sys
 import django
 from django.db.models import F, NOT_PROVIDED
 from django.db.models.sql import aggregates as sqlaggregates
+from django.db.models import aggregates as aggregates
 from django.db.models.sql.constants import MULTI
 from django.db.models.sql.where import OR
 from django.db.utils import DatabaseError, IntegrityError
@@ -302,6 +303,11 @@ class SQLCompiler(NonrelCompiler):
         collection = self.get_collection()
         aggregations = self.query.aggregate_select.items()
 
+        # Since django 1.8 execute_sql fill compiler select, klass_info and
+        # annotation_col_map attributes, that used in Query iteration
+        if django.VERSION >= (1, 8):
+            self.pre_sql_setup()
+
         if len(aggregations) == 1 and isinstance(aggregations[0][1],
                                                  sqlaggregates.Count):
             # Ne need for full-featured aggregation processing if we
@@ -317,9 +323,20 @@ class SQLCompiler(NonrelCompiler):
         except EmptyResultSet:
             return []
 
+        # django since 1.8 runs execute_sql before compiler.results_iter. In
+        # this case SQLCompilers.execute_sql work no only with aggregation
+        # quieries, we should check that and fetch query by ourself
+        if django.VERSION >= (1, 8):
+            if not aggregations:
+                try:
+                    results = query.fetch(self.query.low_mark, self.query.high_mark)
+                except EmptyResultSet:
+                    results = []
+                return results
+
         for alias, aggregate in aggregations:
-            assert isinstance(aggregate, sqlaggregates.Aggregate)
-            if isinstance(aggregate, sqlaggregates.Count):
+            assert isinstance(aggregate, (sqlaggregates.Aggregate, aggregates.Aggregate))
+            if isinstance(aggregate, (sqlaggregates.Count, aggregates.Count)):
                 order.append(None)
                 # Needed to keep the iteration order which is important
                 # in the returned value.

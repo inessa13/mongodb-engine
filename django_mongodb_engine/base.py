@@ -108,7 +108,7 @@ class DatabaseOperations(NonrelDatabaseOperations):
                 value, field.max_digits, field.decimal_places)
 
         # Anything with the "key" db_type is converted to an ObjectId.
-        if db_type == 'key':
+        if db_type == 'key' and lookup != 'exists':
             try:
                 return ObjectId(value)
 
@@ -190,6 +190,14 @@ class DatabaseWrapper(NonrelDatabaseWrapper):
     """
     Public API: connection, database, get_collection.
     """
+
+    operators = dict(NonrelDatabaseWrapper.operators, **{
+        'near': '%s',
+        'exists': '%s',
+    })
+
+    # django 1.8 compatibility
+    data_types = DatabaseCreation.data_types
 
     def __init__(self, *args, **kwargs):
         self.collection_class = kwargs.pop('collection_class', Collection)

@@ -51,6 +51,8 @@ OPERATORS_MAP = {
     'in':     lambda val: {'$in': val},
     'range':  lambda val: {'$gte': val[0], '$lte': val[1]},
     'isnull': lambda val: None if val else {'$ne': None},
+    'exists': lambda val: {'$exists': val},
+    'near': lambda val: {'$near': val},
 
     # Regex matchers.
     'iexact':      safe_regex('^%s$', re.IGNORECASE),
@@ -75,6 +77,7 @@ NEGATED_OPERATORS_MAP = {
     'lte':    lambda val: {'$gt': val},
     'in':     lambda val: {'$nin': val},
     'isnull': lambda val: {'$ne': None} if val else None,
+    'exists': lambda val: {'$exists': not val},
 }
 
 
